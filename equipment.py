@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 from random import uniform
-import marshmallow_dataclass
+from marshmallow_dataclass import class_schema
 import marshmallow
 import json
 import codecs
@@ -26,10 +26,10 @@ class Weapon:
 
 @dataclass
 class Armor:
-   id: int
-   name: str
-   defence: float
-   stamina_per_turn: float
+    id: int
+    name: str
+    defence: float
+    stamina_per_turn: float
 
 
 @dataclass
@@ -79,7 +79,6 @@ class Equipment:
             armor.name for armor in self.equipment_.armors
         ]
 
-
     @staticmethod
     def _get_equipment_data() -> EquipmentData:
         """
@@ -87,7 +86,7 @@ class Equipment:
         """
         with codecs.open('./data/equipment.json', 'r', 'utf-8-sig') as file:
             data = json.load(file)
-            equipment_schema = marshmallow_dataclass.class_schema(EquipmentData)
+            equipment_schema = class_schema(EquipmentData)
             try:
                 return equipment_schema().load(data)
             except marshmallow.exceptions.ValidationError:

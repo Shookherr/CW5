@@ -15,6 +15,7 @@ class UnitClass:
     armor: float
     skill: Skill
 
+
 WarriorClass = UnitClass(
     name='Громила',
     max_health=WARRIOR_MAX_HEALTH,
@@ -26,7 +27,7 @@ WarriorClass = UnitClass(
 )
 
 ThiefClass = UnitClass(
-    name='Ворюга',
+    name='Воришка',
     max_health=THIEF_MAX_HEALTH,
     max_stamina=THIEF_MAX_STAMINA,
     attack=THIEF_ATTACK,

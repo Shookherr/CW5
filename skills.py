@@ -1,14 +1,12 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
-from config import FURYPUNCH_STAMINA, FURYPUNCH_DAMAGE, HARDSHOT_STAMINA, HARDSHOT_DAMAGE
+from marshmallow_dataclass import dataclass
+
+from config import FURYPUNCH_STAMINA, FURYPUNCH_DAMAGE, HARDSHOT_STAMINA, HARDSHOT_DAMAGE, ROUND
 
 
-# from typing import TYPE_CHECKING
-#
-# if TYPE_CHECKING:
-#     from unit import BaseUnit
-
+@dataclass
 class Skill(ABC):
     """
     Базовый класс умения АБСТРАКТНЫЙ
@@ -37,22 +35,24 @@ class Skill(ABC):
         pass
 
     def _is_stamina_enough(self):
-        return self.user.stamina >= self.stamina
+        return round(self.user.stamina, ROUND) >= self.stamina
 
     def use(self, user, target) -> str:
         """
-        Проверка, достаточно ли выносливости у игрока для применения умения.
-        Для вызова скилла везде используем просто use
+        Проверка, достаточно ли выносливости у игрока для применения умения и вызов умения.
+        Для вызова скилла везде используется просто use
         """
         self.user = user
         self.target = target
-        if self._is_stamina_enough:
+        if self._is_stamina_enough():
             return self.skill_effect()
-        return f'{self.user.name} попытался использовать {self.name} но у него не хватило выносливости.'
+
+        return '{self.user.unit_class.name} {self.user.name} попытался использовать {self.name} но у него не хватило ' \
+               'выносливости. '
 
 
 class FuryPunch(Skill):
-    name = 'Свирепый Пинок'
+    name = 'Тяжёлый Подзатыльник'
     stamina = FURYPUNCH_STAMINA
     damage = FURYPUNCH_DAMAGE
 
@@ -65,18 +65,29 @@ class FuryPunch(Skill):
         Результат применения возвращается строкой.
         """
         self.user.stamina -= self.stamina
+        self.user.stamina = round(self.user.stamina, ROUND)
         self.target.hp -= self.damage
+        self.target.hp = round(self.target.hp, ROUND)
+        if self.target.hp < 0.0:
+            self.target.hp = 0.0
 
-        return f'{self.user.name} использует {self.name} и наносит {self.damage} урона противнику.'
+        return f'{self.user.unit_class.name} {self.user.name} использует {self.name} и наносит {self.damage} урона ' \
+               'противнику. '
+
 
 class HardShot(Skill):
-    name = 'Мощный Укол'
+    name = 'Жёсткий Тычок'
     stamina = HARDSHOT_STAMINA
     damage = HARDSHOT_DAMAGE
 
     # Дублировано с FuryPunch.skill_effect() сознательно
     def skill_effect(self) -> str:
         self.user.stamina -= self.stamina
+        self.user.stamina = round(self.user.stamina, ROUND)
         self.target.hp -= self.damage
+        self.target.hp = round(self.target.hp, ROUND)
+        if self.target.hp < 0.0:
+            self.target.hp = 0.0
 
-        return f'{self.user.name} использует {self.name} и наносит {self.damage} урона противнику.'
+        return f'{self.user.unit_class.name} {self.user.name} использует {self.name} и наносит {self.damage} урона ' \
+               'противнику. '

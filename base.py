@@ -1,7 +1,8 @@
 from typing import Optional
 
-from config import STAMINA_PER_ROUND_VALUE
+from config import STAMINA_PER_ROUND_VALUE, ROUND
 from unit import BaseUnit
+
 
 class BaseSingleton(type):
     _instances = {}
@@ -23,7 +24,7 @@ class Arena(metaclass=BaseSingleton):
     def start_game(self, player: BaseUnit, enemy: BaseUnit):
         """
         НАЧАЛО ИГРЫ -> None
-        присваивание экземпляру класса аттрибуты "игрок" и "противник"
+        присваивание экземпляру класса атрибуты "игрок" и "противник"
         а также установка True для свойства "началась ли игра"
         """
         self.player = player
@@ -56,34 +57,37 @@ class Arena(metaclass=BaseSingleton):
 
     def _stamina_regeneration(self):
         """
-        Регенерация здоровья и стамины для игрока и врага за кон
-        в этом методе к количеству стамины игрока и врага прибавляется константное значение.
+        Регенерация выносливости для игрока и врага за кон
+        в этом методе к количеству выносливости игрока и врага прибавляется константное значение.
         Главное - чтобы оно не превысило максимальные значения (используется if)
         """
         units = (self.player, self.enemy)
 
         for unit in units:
-            if unit.stamina + self.STAMINA_PER_ROUND > unit.unit_class.max_stamina:
-                unit.stamina = unit.unit_class.max_stamina
-            else:
-                unit.stamina += self.STAMINA_PER_ROUND
+            unit.stamina += self.STAMINA_PER_ROUND
 
-    def next_turn(self):
+            if unit.stamina > unit.unit_class.max_stamina:
+                unit.stamina = unit.unit_class.max_stamina
+
+            unit.stamina = round(unit.stamina, ROUND)
+
+    def next_turn(self) -> str:
         """
         СЛЕДУЮЩИЙ ХОД -> return result | return self.enemy.hit(self.player)
         срабатывает, когда игрок пропускает ход, или когда игрок наносит удар.
         Создаётся поле result и проверяется, что вернется в результате функции self._check_players_hp.
         Если result -> его возврат
         если же результата пока нет и после завершения хода игра продолжается,
-        тогда запускается процесс регенерации стамины и здоровья для игроков (self._stamina_regeneration)
+        тогда запускается процесс регенерации выносливости для игроков (self._stamina_regeneration)
         и вызывается функция self.enemy.hit(self.player) - ответный удар врага
         """
         result = self._check_players_hp()   # проверка здоровья игроков в начале кона
         if result is not None:
             return result   # собственно, конец игры
-        if self.game_is_running:    # игра продолжается? - можно не проверять
+        if self.game_is_running:    # игра продолжается? - можно и не проверять
+            result = self.enemy.hit(self.player)     # атака противника
             self._stamina_regeneration()    # восстановление игроков
-            self.enemy.hit(self.player)     # атака противника
+            return result
 
     def _end_game(self) -> str:
         """
@@ -103,6 +107,7 @@ class Arena(metaclass=BaseSingleton):
         запуск следующего хода
         возврат результата удара строкой
         """
+
         result = self.player.hit(self.enemy)    # удар игрока
         turn_result = self.next_turn()
         return f'{result}\n{turn_result}'
@@ -112,7 +117,7 @@ class Arena(metaclass=BaseSingleton):
         КНОПКА ИГРОК ИСПОЛЬЗУЕТ УМЕНИЕ
         получение результата от функции self.use_skill
         включение следующего хода
-        возврат результата удара строкой
+        возврат строкой результата удара
         """
         result = self.player.use_skill(self.enemy)  # удар игрока
         turn_result = self.next_turn()
